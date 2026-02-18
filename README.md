@@ -3,13 +3,15 @@
 ## Исходный код сайта <name-domen.ru>
 
 ## Установка:
-1. Склонировать репозиторий: <name-rep.git>
-2. Перейти в папку с проектом: `cd name-proj`
+1. Склонировать репозиторий: `git clone https://github.com/Ximelay/Website-for-young-mathematicians.git`
+2. Перейти в папку с проектом: `cd website-for-young-mathematicians`
 3. Установить зависимости командой `composer install`, `npm install`
-4. Создать и заполнить файл `.env`: `cp .env.example .env`
-5. Собрать Docker-образ: `docker-compose build`
-6. Запустить Docker-образ: `docker-compose up -d`
-7. В терминале Docker-Desktop (`app -> terminal`) ввести `php artisan migrate`
+4. Собрать зависимости `vite`: `npm run build`
+5. Создать и заполнить файл `.env`: `cp .env.example .env`
+6. Собрать Docker-образ: `docker-compose build`
+7. Запустить Docker-образ: `docker-compose up -d`
+8. В терминале Docker-Desktop (`app -> exec`) ввести `php artisan migrate`
+9. Перейти в браузер по url `https://localhost:8000`
 
 ## Полезные команды:
 > `docker-compose down` - выключает контейнеры.
