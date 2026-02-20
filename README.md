@@ -11,6 +11,7 @@
 6. Собрать Docker-образ: `docker-compose build`
 7. Запустить Docker-образ: `docker-compose up -d`
 8. В терминале Docker-Desktop (`app -> exec`) ввести `php artisan migrate`
+8. В терминале Docker-Desktop (`app -> exec`) ввести `php artisan db:seed`
 9. Перейти в браузер по url `https://localhost:8000`
 
 ## Полезные команды:

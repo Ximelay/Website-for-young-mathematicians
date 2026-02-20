@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,11 +17,26 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Роли и разрешения
+        $this->call(RolePermissionSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Тестовый организатор
+        $organizer = User::firstOrCreate(
+            ['email' => 'admin@tyum.ru'],
+            [
+                'first_name'  => 'Администратор',
+                'last_name'   => 'Системный',
+                'middle_name' => null,
+                'email'       => 'admin@tyum.ru',
+                'password'    => Hash::make('password'),
+                'phone'       => '+7 (000) 000-00-00',
+                'is_active'   => true,
+            ]
+        );
+
+        $organizerRole = Role::where('name', 'organizer')->first();
+        if ($organizerRole && ! $organizer->roles()->where('name', 'organizer')->exists()) {
+            $organizer->roles()->attach($organizerRole->id);
+        }
     }
 }
