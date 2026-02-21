@@ -66,6 +66,25 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                 </svg>
                             </a>
+                            @auth
+                                @if(auth()->user()->hasRole('organizer'))
+                                    <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+                                        <a href="{{ route('news.edit', $item) }}"
+                                           class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                            ✏️ Редактировать
+                                        </a>
+                                        <form method="POST" action="{{ route('news.destroy', $item) }}"
+                                              onsubmit="return confirm('Удалить эту новость?');"
+                                              class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                                🗑️ Удалить
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endif
+                            @endauth
                         </div>
                     </div>
                 @empty

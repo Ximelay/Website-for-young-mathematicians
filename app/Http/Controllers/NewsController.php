@@ -84,24 +84,66 @@ class NewsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    // Показать форму редактирования (только для организатора)
+    public function edit(\App\Models\News $news)
     {
-        //
+        if (!auth()->user()->hasRole('organizer')) {
+            abort(403, 'Доступ запрещён');
+        }
+
+        return view('news.edit', compact('news'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    // Обновить новость (только для организатора)
+    public function update(\Illuminate\Http\Request $request, \App\Models\News $news)
     {
-        //
+        if (!auth()->user()->hasRole('organizer')) {
+            abort(403, 'Доступ запрещён');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'content' => 'required',
+            'image' => 'nullable|image|max:2048',
+        ]);
+
+        // Загрузка нового изображения (если есть)
+        if ($request->hasFile('image')) {
+            // Удаляем старое изображение
+            if ($news->image_path) {
+                \Storage::disk('public')->delete($news->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('news', 'public');
+        }
+
+        $news->update($validated);
+
+        return redirect()->route('news.show', $news)
+            ->with('success', '✅ Новость успешно обновлена!');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    // Удалить новость (только для организатора)
+    public function destroy(\App\Models\News $news)
     {
-        //
+        if (!auth()->user()->hasRole('organizer')) {
+            abort(403, 'Доступ запрещён');
+        }
+
+        // Удаляем изображение если есть
+        if ($news->image_path) {
+            \Storage::disk('public')->delete($news->image_path);
+        }
+
+        $news->delete();
+
+        return redirect()->route('news.index')
+            ->with('success', '🗑️ Новость удалена');
     }
 }

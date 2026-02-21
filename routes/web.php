@@ -6,13 +6,21 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NewsController;
 
+// ─── ГЛАВНАЯ СТРАНИЦА  ──────────────────────────────
 Route::get('/', function () {
-    return view('index');
+    // Получаем последние 3 опубликованные новости
+    $latestNews = \App\Models\News::published()
+        ->latest('published_at')
+        ->take(3)
+        ->get();
+
+    return view('index', compact('latestNews'));
 });
 
 Route::get('/examples', function () {
     return view('examples');
 });
+
 Route::get('/test', function () {
     return view('test-page');
 });
@@ -36,11 +44,21 @@ Route::post('/logout', [LoginController::class, 'logout'])
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
-// Новости
+
+// ─── НОВОСТИ (CRUD) ──────────────────────────────────────────────────────────
+// ВАЖНО: Сначала конкретные маршруты, потом с параметрами!
+
+// Публичные маршруты
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
-Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
-// Маршруты для создания новостей (только для организатора)
+
+// Только для авторизованных (конкретные маршруты ДО /news/{news})
 Route::middleware(['auth'])->group(function () {
-    Route::get('/news/create', [App\Http\Controllers\NewsController::class, 'create'])->name('news.create');
-    Route::post('/news', [App\Http\Controllers\NewsController::class, 'store'])->name('news.store');
+    Route::get('/news/create', [NewsController::class, 'create'])->name('news.create');
+    Route::post('/news', [NewsController::class, 'store'])->name('news.store');
+    Route::get('/news/{news}/edit', [NewsController::class, 'edit'])->name('news.edit');
+    Route::put('/news/{news}', [NewsController::class, 'update'])->name('news.update');
+    Route::delete('/news/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
 });
+
+// Маршрут с параметром — ВСЕГДА ПОСЛЕДНИМ!
+Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
