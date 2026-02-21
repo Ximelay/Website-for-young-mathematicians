@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NewsController;
 
 Route::get('/', function () {
     return view('index');
@@ -11,6 +12,9 @@ Route::get('/', function () {
 
 Route::get('/examples', function () {
     return view('examples');
+});
+Route::get('/test', function () {
+    return view('test-page');
 });
 
 // ─── Гостевые маршруты ───────────────────────────────────────────────────────
@@ -32,4 +36,11 @@ Route::post('/logout', [LoginController::class, 'logout'])
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
-
+// Новости
+Route::get('/news', [NewsController::class, 'index'])->name('news.index');
+Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
+// Маршруты для создания новостей (только для организатора)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/news/create', [App\Http\Controllers\NewsController::class, 'create'])->name('news.create');
+    Route::post('/news', [App\Http\Controllers\NewsController::class, 'store'])->name('news.store');
+});
