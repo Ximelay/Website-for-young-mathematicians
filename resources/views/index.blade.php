@@ -97,43 +97,80 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
 
             <!--  Последние новости -->
-            <x-card title="Последние новости">
+            <!-- Последние новости -->
+            <x-card title="📰 Последние новости" class="mb-8">
                 @forelse($latestNews as $news)
-                    <div class="mb-4 pb-4 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
-                        <h3 class="font-semibold text-gray-900 mb-1">
-                            <a href="{{ route('news.show', $news) }}" class="hover:text-indigo-600 transition">
+                    <div class="mb-6 pb-6 border-b border-gray-200 last:border-b-0 last:mb-0 last:pb-0">
+
+                        <!-- Заголовок -->
+                        <h3 class="text-lg font-bold text-gray-900 mb-3 hover:text-indigo-600 transition-colors">
+                            <a href="{{ route('news.show', $news) }}" class="hover:text-indigo-600">
                                 {{ $news->title }}
                             </a>
                         </h3>
-                        <p class="text-gray-600 text-sm mb-2 line-clamp-2">
-                            {{ Str::limit(strip_tags($news->content), 120) }}
-                        </p>
-                        <div class="flex items-center justify-between text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+
+                        <!-- Контент с авто-ссылками -->
+                        <div class="text-gray-600 text-sm mb-3 leading-relaxed">
+                            <div class="text-gray-600 text-sm mb-3 leading-relaxed">
+                                @php
+                                    $text = $news->content;
+                                    // Простой парсинг URL
+                                    $text = preg_replace(
+                                        '/(https?:\/\/[^\s<]+)/i',
+                                        '<a href="$1" target="_blank" rel="noopener" class="text-indigo-600 hover:text-indigo-800 underline">$1</a>',
+                                        $text
+                                    );
+                                @endphp
+                                {!! nl2br($text) !!}
+                            </div>
+                        </div>
+
+                        <!-- Мета-информация -->
+                        <div class="flex items-center justify-between text-xs text-gray-500 pt-2">
+                            <div class="flex items-center gap-3">
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {{ $news->published_at->format('d.m.Y') }}
+                    </span>
+
+                                @if($news->author)
+                                    <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
-                            {{ $news->published_at->format('d.m.Y') }}
+                            {{ $news->author->first_name }} {{ mb_substr($news->author->last_name, 0, 1) }}.
                         </span>
-                            <a href="{{ route('news.show', $news) }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
-                                Читать →
+                                @endif
+                            </div>
+
+                            <a href="{{ route('news.show', $news) }}" class="text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                Читать
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
                             </a>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="mx-auto h-10 w-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                    <!-- Заглушка -->
+                    <div class="text-center py-12 px-4">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                         </svg>
-                        <p class="text-sm">Новостей пока нет</p>
-                        <p class="text-xs mt-1">Скоро здесь появятся актуальные новости</p>
+                        <p class="text-gray-500 font-medium">Новостей пока нет</p>
+                        <p class="text-gray-400 text-sm mt-1">Скоро здесь появятся актуальные новости</p>
                     </div>
                 @endforelse
 
                 @if($latestNews->count() > 0)
-                    <div class="mt-4 pt-4 border-t border-gray-200 text-center">
-                        <a href="{{ route('news.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                            Все новости →
+                    <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                        <a href="{{ route('news.index') }}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-semibold transition-colors">
+                            Все новости
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
                         </a>
                     </div>
                 @endif

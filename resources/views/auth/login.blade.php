@@ -140,10 +140,9 @@
                         </label>
                     </div>
 
-                    {{-- Кнопка входа с ЧЁТКИМ КОНТУРОМ --}}
                     <button
                         type="submit"
-                        class="w-full flex justify-center py-3 px-4 border-2 border-indigo-600 rounded-lg shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:bg-indigo-700 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-[1.02]"
+                        class="w-full flex justify-center py-3 px-4 border-2 border-indigo-600 rounded-lg shadow-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-[1.02]"
                     >
                         Войти в аккаунт
                     </button>

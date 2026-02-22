@@ -58,13 +58,25 @@ class NewsController extends Controller
             $imagePath = $request->file('image')->store('news', 'public');
         }
 
-        // Создаём новость
+        // Генерация уникального slug
+        $slug = \Str::slug($validated['title']);
+        $originalSlug = $slug;
+        $count = 1;
+
+// Проверяем, существует ли такой slug
+        while (\App\Models\News::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+// Создаём новость
         \App\Models\News::create([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'author_id' => auth()->id(),
             'is_published' => true,
             'published_at' => now(),
+            'slug' => $slug, // ← Теперь уникальный!
             'image_path' => $imagePath,
         ]);
 
