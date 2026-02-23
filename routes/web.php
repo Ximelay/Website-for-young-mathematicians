@@ -4,14 +4,20 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\HomeController;
 
-Route::get('/', function () {
-    return view('index');
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/examples', function () {
     return view('examples');
 });
+// Маршруты для событий
+Route::get('/calendar', [CalendarController::class, 'index'])
+    ->name('calendar')
+    ->middleware('auth'); // Добавьте middleware для авторизации
+Route::resource('events', EventController::class)->except('show');
 
 // ─── Гостевые маршруты ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
