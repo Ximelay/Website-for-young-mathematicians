@@ -20,6 +20,11 @@ Route::get('/', function () {
 Route::get('/examples', function () {
     return view('examples');
 });
+// Маршруты для событий
+Route::get('/calendar', [CalendarController::class, 'index'])
+    ->name('calendar')
+    ->middleware('auth'); // Добавьте middleware для авторизации
+Route::resource('events', EventController::class)->except('show');
 
 Route::get('/test', function () {
     return view('test-page');
