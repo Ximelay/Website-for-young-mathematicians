@@ -17,6 +17,11 @@ Route::get('/', function () {
         ->take(3)
         ->get();
 
+    $upcomingEvents = \App\Models\Event::where('start_date', '>=', now())
+        ->orderBy('start_date')
+        ->take(4)
+        ->get();
+
     $stats = [
         'participants'  => \App\Models\User::participants()->count(),
         'teams'         => \App\Models\Team::where('is_active', true)->count(),
@@ -24,7 +29,7 @@ Route::get('/', function () {
         'news'          => \App\Models\News::published()->count(),
     ];
 
-    return view('index', compact('latestNews', 'stats'));
+    return view('index', compact('latestNews', 'upcomingEvents', 'stats'));
 });
 
 // ─── ГОСТЕВЫЕ МАРШРУТЫ ───────────────────────────────────────────────────────
@@ -42,7 +47,6 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 // ─── ПУБЛИЧНЫЕ СТРАНИЦЫ ──────────────────────────────────────────────────────
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
-Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
 
 // ─── АВТОРИЗОВАННЫЕ МАРШРУТЫ ─────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -61,7 +65,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
     Route::resource('events', EventController::class)->except('show');
 
-    // Новости (только организатор — через middleware в контроллере)
+    // Новости — сначала конкретные маршруты, потом с параметрами!
     Route::get('/news/create', [NewsController::class, 'create'])->name('news.create');
     Route::post('/news', [NewsController::class, 'store'])->name('news.store');
     Route::get('/news/{news}/edit', [NewsController::class, 'edit'])->name('news.edit');
@@ -91,3 +95,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-teams/{team}/add-participant', [TeamController::class, 'addParticipant'])->name('teams.add-participant');
     Route::post('/my-teams/{team}/remove-participant/{user}', [TeamController::class, 'removeParticipant'])->name('teams.remove-participant');
 });
+
+// Динамический маршрут новостей — ПОСЛЕ всех статичных /news/create, /news/*/edit
+Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
+
