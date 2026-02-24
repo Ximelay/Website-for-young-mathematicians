@@ -20,7 +20,7 @@
         </div>
 
         {{-- Карточки ролей --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             {{-- Участник --}}
             <a href="{{ route('register.form', 'participant') }}"
@@ -57,27 +57,6 @@
                     Руковожу командой участников. Могу загружать материалы и отслеживать результаты своей команды.
                 </p>
                 <div class="mt-5 flex items-center gap-2 text-sm font-semibold text-green-600 group-hover:text-green-700">
-                    Зарегистрироваться
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            </a>
-
-            {{-- Координатор --}}
-            <a href="{{ route('register.form', 'municipal_coordinator') }}"
-               class="group bg-white rounded-2xl border-2 border-gray-100 shadow-sm hover:border-blue-400 hover:shadow-lg transition-all p-6 flex flex-col">
-                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition">
-                    <span class="text-2xl">🏛️</span>
-                </div>
-                <div class="mb-1 flex items-center gap-2">
-                    <h2 class="text-lg font-bold text-gray-900">Координатор</h2>
-                    <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">Муниципальный</span>
-                </div>
-                <p class="text-sm text-gray-500 flex-1">
-                    Координирую участников своего муниципалитета. Управляю командами и слежу за ходом турнира.
-                </p>
-                <div class="mt-5 flex items-center gap-2 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
                     Зарегистрироваться
                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
