@@ -43,7 +43,7 @@ class DashboardController extends Controller
         }
 
         if ($user->hasRole('mentor')) {
-            $user->load('mentorTeams.participants');
+            $user->load('mentorTeams.members', 'mentorTeams.municipality', 'mentorTeams.organization');
             return view('dashboard.mentor', compact('user'));
         }
 
