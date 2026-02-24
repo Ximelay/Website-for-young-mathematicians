@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
         }
         $this->command->info('✅ Организации созданы');
 
-        // 3️⃣ Тестовый организатор
+        // Тестовый организатор
         $organizer = User::firstOrCreate(
             ['email' => 'admin@tyum.ru'],
             [

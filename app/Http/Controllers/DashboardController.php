@@ -35,7 +35,15 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            return view('dashboard.organizer', compact('user', 'stats', 'pendingDeletions'));
+            // Наставники, ожидающие одобрения
+            $pendingMentors = User::where('is_active', false)
+                ->where('marked_for_deletion', false)
+                ->whereHas('roles', fn($q) => $q->where('name', 'mentor'))
+                ->with('municipality', 'organization')
+                ->latest()
+                ->get();
+
+            return view('dashboard.organizer', compact('user', 'stats', 'pendingDeletions', 'pendingMentors'));
         }
 
         if ($user->hasRole('municipal_coordinator')) {
@@ -66,6 +74,7 @@ class DashboardController extends Controller
         }
 
         $users = User::with('roles', 'municipality', 'organization')
+            ->orderByRaw('is_active DESC')
             ->orderBy('last_name')
             ->paginate(20);
 

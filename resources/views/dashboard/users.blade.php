@@ -25,6 +25,14 @@
             <h1 class="text-2xl font-bold text-gray-900">👥 Пользователи</h1>
             <p class="text-sm text-gray-500 mt-0.5">Всего в системе: {{ $users->total() }}</p>
         </div>
+        <a href="{{ route('users.create') }}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+            Создать пользователя
+        </a>
     </div>
 
     {{-- Таблица --}}
@@ -46,22 +54,29 @@
                         @php
                             $roleColors = ['organizer'=>'bg-purple-100 text-purple-700','municipal_coordinator'=>'bg-blue-100 text-blue-700','mentor'=>'bg-green-100 text-green-700','participant'=>'bg-yellow-100 text-yellow-700'];
                             $roleLabels = ['organizer'=>'Организатор','municipal_coordinator'=>'Координатор','mentor'=>'Наставник','participant'=>'Участник'];
+                            $isPendingMentor = ! $u->is_active && ! $u->marked_for_deletion && $u->roles->contains('name', 'mentor');
+                            $rowClass = match(true) {
+                                $u->marked_for_deletion  => 'bg-red-50 hover:bg-red-50 opacity-80',
+                                $isPendingMentor         => 'bg-amber-50 hover:bg-amber-50/80',
+                                ! $u->is_active          => 'bg-gray-50 hover:bg-gray-100 opacity-60',
+                                default                  => 'hover:bg-gray-50',
+                            };
                         @endphp
-                        <tr class="hover:bg-gray-50 transition {{ $u->marked_for_deletion ? 'bg-red-50 hover:bg-red-50' : '' }}">
+                        <tr class="transition {{ $rowClass }}">
                             <td class="px-5 py-4">
-                                <div class="flex items-center gap-3">
+                                <a href="{{ route('users.show', $u) }}" class="flex items-center gap-3 group">
                                     <div class="w-9 h-9 rounded-full bg-gradient-to-br
-                                        {{ $u->is_active ? 'from-indigo-400 to-purple-500' : 'from-gray-300 to-gray-400' }}
+                                        {{ $u->is_active ? 'from-indigo-400 to-purple-500' : ($isPendingMentor ? 'from-amber-300 to-orange-400' : 'from-gray-300 to-gray-400') }}
                                         flex items-center justify-center flex-shrink-0">
                                         <span class="text-white font-semibold text-xs">
                                             {{ mb_strtoupper(mb_substr($u->first_name,0,1).mb_substr($u->last_name,0,1)) }}
                                         </span>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-semibold text-gray-900">{{ $u->full_name }}</div>
+                                        <div class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition">{{ $u->full_name }}</div>
                                         <div class="text-xs text-gray-400">{{ $u->email }}</div>
                                     </div>
-                                </div>
+                                </a>
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex flex-wrap gap-1">
@@ -89,14 +104,35 @@
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                                         <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Активен
                                     </span>
+                                @elseif($isPendingMentor)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Ожидает одобрения
+                                    </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Деактивирован
+                                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Неактивен
                                     </span>
                                 @endif
                             </td>
                             <td class="px-5 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
+                                    {{-- Одобрить (только для ожидающих наставников) --}}
+                                    @if($isPendingMentor)
+                                        <form method="POST" action="{{ route('users.approve', $u) }}">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition">
+                                                ✓ Одобрить
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    {{-- Редактировать --}}
+                                    <a href="{{ route('users.edit', $u) }}"
+                                       class="px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-lg hover:bg-indigo-50 transition">
+                                        Изменить
+                                    </a>
+
                                     @if($u->marked_for_deletion)
                                         <form method="POST" action="{{ route('users.confirm-deletion', $u) }}">
                                             @csrf

@@ -17,15 +17,23 @@ use Illuminate\View\View;
 class RegisterController extends Controller
 {
     /**
-     * Допустимые роли для самостоятельной регистрации
+     * Допустимые роли для самостоятельной регистрации.
+     * municipal_coordinator — только через назначение организатором, не через публичную регистрацию.
      */
-    protected array $allowedRoles = ['participant', 'mentor', 'municipal_coordinator'];
+    protected array $allowedRoles = ['participant', 'mentor'];
 
     protected array $roleLabels = [
         'participant' => 'Участник',
-        'mentor' => 'Наставник',
-        'municipal_coordinator' => 'Координатор',
+        'mentor'      => 'Наставник',
     ];
+
+    /**
+     * Страница ожидания одобрения
+     */
+    public function showPending(): View
+    {
+        return view('auth.register-pending');
+    }
 
     /**
      * Страница выбора роли
@@ -78,16 +86,19 @@ class RegisterController extends Controller
             abort(404);
         }
 
-        $user = DB::transaction(function () use ($request, $role) {
+        // Наставник ожидает одобрения — аккаунт создаётся неактивным
+        $requiresApproval = ($role === 'mentor');
+
+        $user = DB::transaction(function () use ($request, $role, $requiresApproval) {
             $data = [
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'middle_name' => $request->middle_name,
-                'email' => $request->email,
-                'password' => $request->password,
-                'phone' => $request->phone,
+                'first_name'      => $request->first_name,
+                'last_name'       => $request->last_name,
+                'middle_name'     => $request->middle_name,
+                'email'           => $request->email,
+                'password'        => $request->password,
+                'phone'           => $request->phone,
                 'municipality_id' => $request->municipality_id,
-                'is_active' => true,
+                'is_active'       => ! $requiresApproval,
             ];
 
             if ($role === 'participant') {
@@ -102,10 +113,6 @@ class RegisterController extends Controller
                 $data['position']        = $request->position;
             }
 
-            if ($role === 'municipal_coordinator') {
-                $data['position'] = $request->position;
-            }
-
             $user = User::create($data);
 
             // Привязываем роль
@@ -116,6 +123,12 @@ class RegisterController extends Controller
 
             return $user;
         });
+
+        // Наставника не логиним — отправляем на страницу ожидания
+        if ($requiresApproval) {
+            return redirect()->route('register.pending')
+                ->with('pending_name', $user->first_name);
+        }
 
         Auth::login($user);
 

@@ -121,7 +121,7 @@
                         <option value="participant">Участник</option>
                         <option value="mentor">Наставник</option>
                         <option value="coordinator">Координатор</option>
-                        <option value="organizer">Организатор</option>
+                        <option value="organizer">Организатор (админ)</option>
                     </select>
                 </div>
 

@@ -66,6 +66,21 @@
             <form method="POST" action="{{ route('register.submit', $role) }}" class="p-6 space-y-5">
                 @csrf
 
+                {{-- Баннер об одобрении для наставника --}}
+                @if($role === 'mentor')
+                    <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-sm text-amber-800">
+                            <span class="font-semibold">Требуется одобрение.</span>
+                            После регистрации ваш аккаунт будет отправлен на проверку организатору.
+                            Войти в систему вы сможете только после одобрения.
+                        </p>
+                    </div>
+                @endif
+
                 {{-- Ошибки --}}
                 @if ($errors->any())
                     <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">

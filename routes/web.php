@@ -8,11 +8,16 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\UserController;
+use App\Models\News;
+use App\Models\Organization;
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // ─── ГЛАВНАЯ СТРАНИЦА ────────────────────────────────────────────────────────
 Route::get('/', function () {
-    $latestNews = \App\Models\News::published()
+    $latestNews = News::published()
         ->latest('published_at')
         ->take(3)
         ->get();
@@ -23,10 +28,10 @@ Route::get('/', function () {
         ->get();
 
     $stats = [
-        'participants'  => \App\Models\User::participants()->count(),
-        'teams'         => \App\Models\Team::where('is_active', true)->count(),
-        'organizations' => \App\Models\Organization::count(),
-        'news'          => \App\Models\News::published()->count(),
+        'participants'  => User::participants()->count(),
+        'teams'         => Team::where('is_active', true)->count(),
+        'organizations' => Organization::count(),
+        'news'          => News::published()->count(),
     ];
 
     return view('index', compact('latestNews', 'upcomingEvents', 'stats'));
@@ -40,6 +45,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'showSelectRole'])->name('register');
     Route::get('/register/{role}', [RegisterController::class, 'showForm'])->name('register.form');
     Route::post('/register/{role}', [RegisterController::class, 'register'])->name('register.submit');
+    Route::get('/register-pending', [RegisterController::class, 'showPending'])->name('register.pending');
 });
 
 // ─── ВЫХОД ───────────────────────────────────────────────────────────────────
@@ -56,6 +62,12 @@ Route::middleware('auth')->group(function () {
 
     // Управление пользователями (только организатор)
     Route::get('/users', [DashboardController::class, 'users'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('/users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
     Route::post('/users/{user}/confirm-deletion', [DashboardController::class, 'confirmDeletion'])->name('users.confirm-deletion');
     Route::post('/users/{user}/mark-for-deletion', [DashboardController::class, 'markForDeletion'])->name('users.mark-for-deletion');
     Route::post('/users/{user}/cancel-deletion', [DashboardController::class, 'cancelDeletion'])->name('users.cancel-deletion');

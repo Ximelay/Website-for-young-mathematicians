@@ -33,9 +33,14 @@ class LoginController extends Controller
 
         if ($user && ! $user->is_active) {
             $request->incrementRateLimit();
-            return back()->withErrors([
-                'email' => 'Ваш аккаунт деактивирован. Обратитесь к организатору.',
-            ])->onlyInput('email');
+
+            // Различаем: наставник ожидает одобрения vs деактивированный аккаунт
+            $isPendingMentor = $user->hasRole('mentor') && ! $user->marked_for_deletion;
+            $message = $isPendingMentor
+                ? 'Ваш аккаунт ещё не одобрен организатором. Пожалуйста, ожидайте.'
+                : 'Ваш аккаунт деактивирован. Обратитесь к организатору.';
+
+            return back()->withErrors(['email' => $message])->onlyInput('email');
         }
 
         if (! Auth::attempt($credentials, $remember)) {

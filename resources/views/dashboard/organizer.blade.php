@@ -98,6 +98,61 @@
         </div>
     </div>
 
+    {{-- Наставники, ожидающие одобрения --}}
+    @if($pendingMentors->count() > 0)
+        <div class="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-amber-100 flex items-center justify-between bg-amber-50">
+                <div>
+                    <h2 class="font-semibold text-gray-900">👨‍🏫 Ожидают одобрения — Наставники</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Зарегистрировались, но ещё не активированы</p>
+                </div>
+                <span class="px-2.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                    {{ $pendingMentors->count() }}
+                </span>
+            </div>
+            <div class="divide-y divide-gray-50">
+                @foreach($pendingMentors as $mentor)
+                    <div class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition">
+                        <a href="{{ route('users.show', $mentor) }}"
+                           class="flex items-center gap-3 min-w-0 flex-1 group">
+                            <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                <span class="text-amber-700 font-semibold text-sm">
+                                    {{ mb_strtoupper(mb_substr($mentor->first_name, 0, 1) . mb_substr($mentor->last_name, 0, 1)) }}
+                                </span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition">
+                                    {{ $mentor->full_name }}
+                                </div>
+                                <div class="text-xs text-gray-400">
+                                    {{ $mentor->email }}
+                                    @if($mentor->municipality) · {{ $mentor->municipality->name }} @endif
+                                    @if($mentor->organization) · {{ $mentor->organization->name }} @endif
+                                </div>
+                                @if($mentor->position)
+                                    <div class="text-xs text-gray-500 mt-0.5">{{ $mentor->position }}</div>
+                                @endif
+                            </div>
+                        </a>
+                        <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+                            <a href="{{ route('users.edit', $mentor) }}"
+                               class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition">
+                                Изменить
+                            </a>
+                            <form method="POST" action="{{ route('users.approve', $mentor) }}">
+                                @csrf
+                                <button type="submit"
+                                        class="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition">
+                                    ✓ Одобрить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Ожидают подтверждения --}}
     @if($pendingDeletions->count() > 0)
         <div class="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
