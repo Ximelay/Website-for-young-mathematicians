@@ -15,6 +15,7 @@ class Team extends Model
         'municipality_id',
         'mentor_id',
         'grade',
+        'description',
         'is_active',
     ];
 

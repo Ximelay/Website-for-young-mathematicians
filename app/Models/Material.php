@@ -13,6 +13,8 @@ class Material extends Model
         'type',
         'year',
         'file_path',
+        'file_type',
+        'file_size',
         'video_url',
         'uploaded_by',
         'is_published',
