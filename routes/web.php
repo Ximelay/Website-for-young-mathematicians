@@ -2,35 +2,32 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\NewsController;
+use App\Http\Controllers\TeamController;
+use Illuminate\Support\Facades\Route;
 
-// ─── ГЛАВНАЯ СТРАНИЦА  ──────────────────────────────
+// ─── ГЛАВНАЯ СТРАНИЦА ────────────────────────────────────────────────────────
 Route::get('/', function () {
-    // Получаем последние 3 опубликованные новости
     $latestNews = \App\Models\News::published()
         ->latest('published_at')
         ->take(3)
         ->get();
 
-    return view('index', compact('latestNews'));
+    $stats = [
+        'participants'  => \App\Models\User::participants()->count(),
+        'teams'         => \App\Models\Team::where('is_active', true)->count(),
+        'organizations' => \App\Models\Organization::count(),
+        'news'          => \App\Models\News::published()->count(),
+    ];
+
+    return view('index', compact('latestNews', 'stats'));
 });
 
-Route::get('/examples', function () {
-    return view('examples');
-});
-// Маршруты для событий
-Route::get('/calendar', [CalendarController::class, 'index'])
-    ->name('calendar')
-    ->middleware('auth'); // Добавьте middleware для авторизации
-Route::resource('events', EventController::class)->except('show');
-
-Route::get('/test', function () {
-    return view('test-page');
-});
-
-// ─── Гостевые маршруты ───────────────────────────────────────────────────────
+// ─── ГОСТЕВЫЕ МАРШРУТЫ ───────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
@@ -40,87 +37,57 @@ Route::middleware('guest')->group(function () {
     Route::post('/register/{role}', [RegisterController::class, 'register'])->name('register.submit');
 });
 
-// ─── Выход ───────────────────────────────────────────────────────────────────
-Route::post('/logout', [LoginController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+// ─── ВЫХОД ───────────────────────────────────────────────────────────────────
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-// ─── Личный кабинет ──────────────────────────────────────────────────────────
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-});
-
-// ─── НОВОСТИ (CRUD) ──────────────────────────────────────────────────────────
-// ВАЖНО: Сначала конкретные маршруты, потом с параметрами!
-
-// Публичные маршруты
+// ─── ПУБЛИЧНЫЕ СТРАНИЦЫ ──────────────────────────────────────────────────────
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
+Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');
 
-// Только для авторизованных (конкретные маршруты ДО /news/{news})
-Route::middleware(['auth'])->group(function () {
-    Route::post('/users/{user}/confirm-deletion', [App\Http\Controllers\DashboardController::class, 'confirmDeletion'])
-        ->name('users.confirm-deletion');
-    Route::post('/users/{user}/mark-for-deletion', [App\Http\Controllers\DashboardController::class, 'markForDeletion'])
-        ->name('users.mark-for-deletion');
+// ─── АВТОРИЗОВАННЫЕ МАРШРУТЫ ─────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
 
-    Route::post('/users/{user}/confirm-deletion', [App\Http\Controllers\DashboardController::class, 'confirmDeletion'])
-        ->name('users.confirm-deletion');
+    // Личный кабинет
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::post('/users/{user}/cancel-deletion', [App\Http\Controllers\DashboardController::class, 'cancelDeletion'])
-        ->name('users.cancel-deletion');
+    // Управление пользователями (только организатор)
+    Route::get('/users', [DashboardController::class, 'users'])->name('users.index');
+    Route::post('/users/{user}/confirm-deletion', [DashboardController::class, 'confirmDeletion'])->name('users.confirm-deletion');
+    Route::post('/users/{user}/mark-for-deletion', [DashboardController::class, 'markForDeletion'])->name('users.mark-for-deletion');
+    Route::post('/users/{user}/cancel-deletion', [DashboardController::class, 'cancelDeletion'])->name('users.cancel-deletion');
+    Route::patch('/users/{user}/toggle-active', [DashboardController::class, 'toggleActive'])->name('users.toggle-active');
+
+    // Календарь и события
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
+    Route::resource('events', EventController::class)->except('show');
+
+    // Новости (только организатор — через middleware в контроллере)
     Route::get('/news/create', [NewsController::class, 'create'])->name('news.create');
     Route::post('/news', [NewsController::class, 'store'])->name('news.store');
     Route::get('/news/{news}/edit', [NewsController::class, 'edit'])->name('news.edit');
     Route::put('/news/{news}', [NewsController::class, 'update'])->name('news.update');
     Route::delete('/news/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
-    Route::post('/users/{user}/mark-for-deletion', [App\Http\Controllers\DashboardController::class, 'markForDeletion'])
-        ->name('users.mark-for-deletion');
-    // ─── МАТЕРИАЛЫ ─────────────────────────────────────────────────────────────
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/materials', [App\Http\Controllers\MaterialController::class, 'index'])
-            ->name('materials.index');
-        Route::get('/materials/create', [App\Http\Controllers\MaterialController::class, 'create'])
-            ->name('materials.create');
-        Route::post('/materials', [App\Http\Controllers\MaterialController::class, 'store'])
-            ->name('materials.store');
-        Route::get('/materials/{material}/download', [App\Http\Controllers\MaterialController::class, 'download'])
-            ->name('materials.download');
-        Route::delete('/materials/{material}', [App\Http\Controllers\MaterialController::class, 'destroy'])
-            ->name('materials.destroy');
-    });
-    // ─── КОМАНДЫ ─────────────────────────────────────────────────────────────
-// Публичные маршруты (для участников)
-    Route::get('/teams', [App\Http\Controllers\TeamController::class, 'publicIndex'])
-        ->name('teams.public');
-    Route::post('/teams/{team}/join', [App\Http\Controllers\TeamController::class, 'join'])
-        ->middleware('auth')->name('teams.join');
-    Route::post('/teams/leave', [App\Http\Controllers\TeamController::class, 'leave'])
-        ->middleware('auth')->name('teams.leave');
 
-// Только для авторизованных (наставники, организаторы)
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/my-teams', [App\Http\Controllers\TeamController::class, 'index'])
-            ->name('teams.index');
-        Route::get('/my-teams/create', [App\Http\Controllers\TeamController::class, 'create'])
-            ->name('teams.create');
-        Route::post('/my-teams', [App\Http\Controllers\TeamController::class, 'store'])
-            ->name('teams.store');
-        Route::get('/my-teams/{team}', [App\Http\Controllers\TeamController::class, 'show'])
-            ->name('teams.show');
-        Route::get('/my-teams/{team}/edit', [App\Http\Controllers\TeamController::class, 'edit'])
-            ->name('teams.edit');
-        Route::put('/my-teams/{team}', [App\Http\Controllers\TeamController::class, 'update'])
-            ->name('teams.update');
-        Route::delete('/my-teams/{team}', [App\Http\Controllers\TeamController::class, 'destroy'])
-            ->name('teams.destroy');
+    // Материалы
+    Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+    Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create');
+    Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
+    Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
+    Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 
-        // Управление участниками команды
-        Route::post('/my-teams/{team}/add-participant', [App\Http\Controllers\TeamController::class, 'addParticipant'])
-            ->name('teams.add-participant');
-        Route::post('/my-teams/{team}/remove-participant/{user}', [App\Http\Controllers\TeamController::class, 'removeParticipant'])
-            ->name('teams.remove-participant');
-    });
+    // Публичный список команд
+    Route::get('/teams', [TeamController::class, 'publicIndex'])->name('teams.public');
+    Route::post('/teams/{team}/join', [TeamController::class, 'join'])->name('teams.join');
+    Route::post('/teams/leave', [TeamController::class, 'leave'])->name('teams.leave');
+
+    // Управление командами (наставник / организатор)
+    Route::get('/my-teams', [TeamController::class, 'index'])->name('teams.index');
+    Route::get('/my-teams/create', [TeamController::class, 'create'])->name('teams.create');
+    Route::post('/my-teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::get('/my-teams/{team}', [TeamController::class, 'show'])->name('teams.show');
+    Route::get('/my-teams/{team}/edit', [TeamController::class, 'edit'])->name('teams.edit');
+    Route::put('/my-teams/{team}', [TeamController::class, 'update'])->name('teams.update');
+    Route::delete('/my-teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
+    Route::post('/my-teams/{team}/add-participant', [TeamController::class, 'addParticipant'])->name('teams.add-participant');
+    Route::post('/my-teams/{team}/remove-participant/{user}', [TeamController::class, 'removeParticipant'])->name('teams.remove-participant');
 });
-
-// Маршрут с параметром — ВСЕГДА ПОСЛЕДНИМ!
-Route::get('/news/{news}', [NewsController::class, 'show'])->name('news.show');

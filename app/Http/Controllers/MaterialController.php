@@ -13,7 +13,7 @@ class MaterialController extends Controller
      */
     public function index()
     {
-        $materials = Material::with('uploadedBy')
+        $materials = Material::with('uploader')
             ->latest()
             ->paginate(15);
 

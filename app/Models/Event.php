@@ -53,10 +53,10 @@ class Event extends Model
     {
         $types = [
             'municipal_stage' => 'Муниципальный этап',
-            'regional_stage' => 'Региональный этап',
-            'meeting' => 'Внутриколледжный этап',
-            'school' => 'Внутришкольный этап',
-            'other' => 'Другое'
+            'regional_stage'  => 'Региональный этап',
+            'meeting'         => 'Встреча',
+            'deadline'        => 'Дедлайн',
+            'other'           => 'Другое',
         ];
 
         return $types[$this->type] ?? 'Неизвестный тип';

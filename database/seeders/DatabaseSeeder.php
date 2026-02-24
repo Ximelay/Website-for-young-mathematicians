@@ -114,7 +114,7 @@ class DatabaseSeeder extends Seeder
         $participantRole = Role::where('name', 'participant')->first();
 
         if ($participantRole) {
-            User::firstOrCreate(
+            $participant = User::firstOrCreate(
                 ['email' => 'participant@tyum.ru'],
                 [
                     'first_name'      => 'Алексей',
@@ -129,7 +129,11 @@ class DatabaseSeeder extends Seeder
                     'team_id'         => null,
                     'is_active'       => true,
                 ]
-            )->roles()->attach($participantRole->id);
+            );
+
+            if (!$participant->roles()->where('name', 'participant')->exists()) {
+                $participant->roles()->attach($participantRole->id);
+            }
 
             $this->command->info('✅ Участник создан: participant@tyum.ru');
         }

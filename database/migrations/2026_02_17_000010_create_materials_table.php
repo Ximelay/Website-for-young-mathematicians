@@ -18,7 +18,9 @@ return new class extends Migration
             $table->enum('type', ['task', 'solution', 'video', 'other']); // Тип материала
             $table->integer('year')->nullable(); // Год (для заданий прошлых лет)
             $table->string('file_path')->nullable(); // Путь к файлу
-            $table->string('video_url')->nullable(); // Ссылка на видео (онлайн-встреча, запись)
+            $table->string('file_type')->nullable();  // Расширение файла (pdf, docx...)
+            $table->unsignedBigInteger('file_size')->nullable(); // Размер файла в байтах
+            $table->string('video_url')->nullable(); // Ссылка на видео
             $table->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete(); // Кто загрузил
             $table->boolean('is_published')->default(false); // Опубликовано
             $table->timestamps();

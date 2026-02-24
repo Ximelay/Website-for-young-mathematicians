@@ -2,10 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\News;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class NewsController extends Controller
 {
+    public function __construct()
+    {
+        // Только организатор может управлять новостями; index и show — публичные
+        $this->middleware(['auth', 'role:organizer'])->except(['index', 'show']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -13,7 +23,7 @@ class NewsController extends Controller
     public function index()
     {
         // Берём только опубликованные новости, сортируем по дате
-        $news = \App\Models\News::published()
+        $news = News::published()
             ->latest('published_at')
             ->paginate(9); // По 9 штук на страницу
 
@@ -26,11 +36,6 @@ class NewsController extends Controller
     // Показать форму создания новости (только для организатора)
     public function create()
     {
-        // Проверка прав
-        if (!auth()->user()->hasRole('organizer')) {
-            abort(403, 'Доступ запрещён');
-        }
-
         return view('news.create');
     }
 
@@ -38,13 +43,8 @@ class NewsController extends Controller
      * Store a newly created resource in storage.
      */
     // Сохранить новую новость
-    public function store(\Illuminate\Http\Request $request)
+    public function store(Request $request)
     {
-        // Проверка прав
-        if (!auth()->user()->hasRole('organizer')) {
-            abort(403, 'Доступ запрещён');
-        }
-
         // Валидация данных
         $validated = $request->validate([
             'title' => 'required|max:255',
@@ -58,25 +58,22 @@ class NewsController extends Controller
             $imagePath = $request->file('image')->store('news', 'public');
         }
 
-        // Генерация уникального slug
-        $slug = \Str::slug($validated['title']);
+        // slug генерируется в boot() модели; уникальность обеспечиваем здесь
+        $slug = Str::slug($validated['title']);
         $originalSlug = $slug;
-        $count = 1;
-
-// Проверяем, существует ли такой slug
-        while (\App\Models\News::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $count;
-            $count++;
+        $i = 1;
+        while (News::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $i++;
         }
 
-// Создаём новость
-        \App\Models\News::create([
+        // Создаём новость
+        News::create([
             'title' => $validated['title'],
             'content' => $validated['content'],
+            'slug' => $slug,
             'author_id' => auth()->id(),
             'is_published' => true,
             'published_at' => now(),
-            'slug' => $slug, // ← Теперь уникальный!
             'image_path' => $imagePath,
         ]);
 
@@ -88,7 +85,7 @@ class NewsController extends Controller
      * Display the specified resource.
      */
     // Метод для просмотра одной новости
-    public function show(\App\Models\News $news)
+    public function show(News $news)
     {
         return view('news.show', compact('news'));
     }
@@ -97,12 +94,8 @@ class NewsController extends Controller
      * Show the form for editing the specified resource.
      */
     // Показать форму редактирования (только для организатора)
-    public function edit(\App\Models\News $news)
+    public function edit(News $news)
     {
-        if (!auth()->user()->hasRole('organizer')) {
-            abort(403, 'Доступ запрещён');
-        }
-
         return view('news.edit', compact('news'));
     }
 
@@ -110,12 +103,8 @@ class NewsController extends Controller
      * Update the specified resource in storage.
      */
     // Обновить новость (только для организатора)
-    public function update(\Illuminate\Http\Request $request, \App\Models\News $news)
+    public function update(Request $request, News $news)
     {
-        if (!auth()->user()->hasRole('organizer')) {
-            abort(403, 'Доступ запрещён');
-        }
-
         $validated = $request->validate([
             'title' => 'required|max:255',
             'content' => 'required',
@@ -126,10 +115,13 @@ class NewsController extends Controller
         if ($request->hasFile('image')) {
             // Удаляем старое изображение
             if ($news->image_path) {
-                \Storage::disk('public')->delete($news->image_path);
+                Storage::disk('public')->delete($news->image_path);
             }
             $validated['image_path'] = $request->file('image')->store('news', 'public');
         }
+
+        // Убираем 'image' (объект UploadedFile) — он не нужен модели
+        unset($validated['image']);
 
         $news->update($validated);
 
@@ -142,15 +134,11 @@ class NewsController extends Controller
      * Remove the specified resource from storage.
      */
     // Удалить новость (только для организатора)
-    public function destroy(\App\Models\News $news)
+    public function destroy(News $news)
     {
-        if (!auth()->user()->hasRole('organizer')) {
-            abort(403, 'Доступ запрещён');
-        }
-
         // Удаляем изображение если есть
         if ($news->image_path) {
-            \Storage::disk('public')->delete($news->image_path);
+            Storage::disk('public')->delete($news->image_path);
         }
 
         $news->delete();

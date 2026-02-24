@@ -1,221 +1,228 @@
+@php use App\Models\Team;use App\Models\User; @endphp
 @extends('layouts.app')
 
 @section('title', 'Личный кабинет — Координатор')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-        {{-- ✅ Сообщения: успех и ошибка --}}
         @if (session('success'))
             <x-alert type="success" class="mb-6">{{ session('success') }}</x-alert>
         @endif
         @if (session('error'))
-            <x-alert type="error" class="mb-6">{{ session('error') }}</x-alert>
+            <x-alert type="danger" class="mb-6">{{ session('error') }}</x-alert>
         @endif
 
-        <!-- Заголовок -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">🏛️ Муниципальный координатор</h1>
-            <p class="text-gray-500 mt-1">Управление пользователями вашего муниципалитета</p>
-            @if ($user->municipality)
-                <span class="inline-block mt-2 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-                📍 {{ $user->municipality->name }}
-            </span>
-            @endif
-        </div>
-
-        <!-- Статистика муниципалитета -->
         @php
             $municipalityId = $user->municipality_id;
             $stats = [
-                'users' => \App\Models\User::where('municipality_id', $municipalityId)->where('is_active', true)->count(),
-               'teams' => \App\Models\Team::whereHas('members', fn($q) =>
-    $q->where('municipality_id', $municipalityId)
-)->count(),
-                'organizations' => \App\Models\User::where('municipality_id', $municipalityId)
-                    ->whereNotNull('organization_id')
-                    ->distinct('organization_id')
-                    ->count(),
+                'users' => User::where('municipality_id', $municipalityId)->where('is_active', true)->count(),
+                'teams' => Team::whereHas('members', fn($q) => $q->where('municipality_id', $municipalityId))->count(),
+                'organizations' => User::where('municipality_id', $municipalityId)->whereNotNull('organization_id')->distinct('organization_id')->count(),
             ];
+            $users = User::where('municipality_id', $municipalityId)
+                ->with('roles', 'organization', 'team')
+                ->where('is_active', true)
+                ->latest()
+                ->paginate(15);
         @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <x-card title="👥 Пользователей">
-                <p class="text-3xl font-bold text-indigo-600 mb-2">{{ $stats['users'] }}</p>
-                <p class="text-gray-500 text-sm">Активные пользователи в муниципалитете</p>
-            </x-card>
-            <x-card title="🏆 Команд">
-                <p class="text-3xl font-bold text-green-600 mb-2">{{ $stats['teams'] }}</p>
-                <p class="text-gray-500 text-sm">Зарегистрированные команды</p>
-            </x-card>
-            <x-card title="🏫 Организаций">
-                <p class="text-3xl font-bold text-purple-600 mb-2">{{ $stats['organizations'] }}</p>
-                <p class="text-gray-500 text-sm">Школы и учреждения</p>
-            </x-card>
+        {{-- Шапка --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow flex-shrink-0">
+                    <span
+                        class="text-2xl font-bold text-white">{{ mb_strtoupper(mb_substr($user->first_name, 0, 1)) }}</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ $user->full_name }}</h1>
+                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Координатор</span>
+                        @if($user->municipality)
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                            🏛️ {{ $user->municipality->name }}
+                        </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Список пользователей муниципалитета -->
-        <x-card title="👥 Пользователи муниципалитета" class="mb-8">
+        {{-- Статистика --}}
+        <div class="grid grid-cols-3 gap-4 mb-6">
             @php
-                $users = \App\Models\User::where('municipality_id', $municipalityId)
-                    ->with('roles', 'organization', 'team')
-                    ->where('is_active', true)
-                    ->latest()
-                    ->paginate(15);
+                $statCards = [
+                    ['label' => 'Пользователей', 'value' => $stats['users'],         'color' => 'indigo'],
+                    ['label' => 'Команд',         'value' => $stats['teams'],         'color' => 'green'],
+                    ['label' => 'Организаций',    'value' => $stats['organizations'], 'color' => 'purple'],
+                ];
             @endphp
+            @foreach($statCards as $s)
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                    <p class="text-3xl font-bold text-gray-900 mb-0.5">{{ $s['value'] }}</p>
+                    <p class="text-sm text-gray-500">{{ $s['label'] }}</p>
+                </div>
+            @endforeach
+        </div>
 
+        {{-- Быстрые действия --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+            <h2 class="font-semibold text-gray-900 mb-3">⚡ Действия</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('teams.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition shadow-sm">
+                    🏆 Команды
+                </a>
+                <a href="{{ route('materials.create') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition shadow-sm">
+                    📁 Загрузить материал
+                </a>
+                <a href="{{ route('calendar') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm">
+                    📅 Календарь
+                </a>
+            </div>
+        </div>
+
+        {{-- Пользователи муниципалитета --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="font-semibold text-gray-900">👥 Пользователи муниципалитета</h2>
+                <span
+                    class="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">{{ $users->total() }}</span>
+            </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ФИО</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Роль</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Организация</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Команда</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
+                <table class="min-w-full">
+                    <thead>
+                    <tr class="bg-gray-50 border-b border-gray-100">
+                        <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Пользователь
+                        </th>
+                        <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Роль
+                        </th>
+                        <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                            Организация
+                        </th>
+                        <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                            Команда
+                        </th>
+                        <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Действие
+                        </th>
                     </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-50">
                     @forelse($users as $userItem)
+                        @php
+                            $roleColors = ['organizer'=>'bg-purple-100 text-purple-700','municipal_coordinator'=>'bg-blue-100 text-blue-700','mentor'=>'bg-green-100 text-green-700','participant'=>'bg-yellow-100 text-yellow-700'];
+                            $roleLabels = ['organizer'=>'Организатор','municipal_coordinator'=>'Координатор','mentor'=>'Наставник','participant'=>'Участник'];
+                        @endphp
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3">
-                                <div class="text-sm font-medium text-gray-900">{{ $userItem->getFullNameAttribute() }}</div>
-                                <div class="text-xs text-gray-500">{{ $userItem->email }}</div>
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0">
+                                        <span class="text-white font-semibold text-xs">
+                                            {{ mb_strtoupper(mb_substr($userItem->first_name,0,1).mb_substr($userItem->last_name,0,1)) }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div
+                                            class="text-sm font-semibold text-gray-900">{{ $userItem->full_name }}</div>
+                                        <div class="text-xs text-gray-400">{{ $userItem->email }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-4 py-3">
-                                @foreach($userItem->roles as $role)
-                                    <span class="inline-block px-2 py-0.5 text-xs rounded {{
-                                    $role->name === 'participant' ? 'bg-yellow-100 text-yellow-800' :
-                                    ($role->name === 'mentor' ? 'bg-green-100 text-green-800' :
-                                    ($role->name === 'municipal_coordinator' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-purple-100 text-purple-800'))
-                                }}">
-                                    {{ $role->display_name ?? match($role->name) {
-                                        'participant' => 'Участник',
-                                        'mentor' => 'Наставник',
-                                        'municipal_coordinator' => 'Координатор',
-                                        'organizer' => 'Организатор',
-                                        default => $role->name
-                                    } }}
-                                </span>
-                                @endforeach
+                            <td class="px-5 py-4">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($userItem->roles as $role)
+                                        <span
+                                            class="px-2 py-0.5 text-xs rounded-full font-medium {{ $roleColors[$role->name] ?? 'bg-gray-100 text-gray-700' }}">
+                                            {{ $roleLabels[$role->name] ?? $role->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-900">
-                                {{ $userItem->organization->short_name ?? $userItem->organization->name ?? '—' }}
+                            <td class="px-5 py-4 text-sm text-gray-600 hidden md:table-cell">
+                                {{ $userItem->organization->name ?? '—' }}
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-900">
+                            <td class="px-5 py-4 text-sm text-gray-600 hidden lg:table-cell">
                                 {{ $userItem->team->name ?? '—' }}
                             </td>
-                            <td class="px-4 py-3">
-                                @if($userItem->marked_for_deletion)
-                                    <span class="inline-block px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800">⏳ Ожидает</span>
-                                @else
-                                    <span class="inline-block px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">✓ Активен</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
+                            <td class="px-5 py-4 text-right">
                                 @if(!$userItem->marked_for_deletion && !$userItem->hasRole('organizer'))
-                                    <button onclick="openModal({{ $userItem->id }}, '{{ addslashes($userItem->getFullNameAttribute()) }}')"
-                                            class="text-red-600 hover:text-red-800 text-sm font-medium inline-flex items-center gap-1">
+                                    <button
+                                        onclick="openModal({{ $userItem->id }}, '{{ addslashes($userItem->full_name) }}')"
+                                        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                        title="Пометить на удаление">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
-                                        Пометить
                                     </button>
+                                @elseif($userItem->marked_for_deletion)
+                                    <span class="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-700">⏳ Ожидает</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-gray-500">
-                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                <p class="text-sm">Пользователи не найдены</p>
+                            <td colspan="5" class="px-5 py-12 text-center text-gray-500 text-sm">Пользователи не
+                                найдены
                             </td>
                         </tr>
                     @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <!-- Пагинация -->
             @if($users->hasPages())
-                <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
-                    {{ $users->links() }}
-                </div>
+                <div class="px-5 py-4 border-t border-gray-100 bg-gray-50">{{ $users->links() }}</div>
             @endif
-        </x-card>
-
-        <!-- Карточки действий (твои оригинальные) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <x-card title="🏆 Муниципальный этап">
-                <p class="text-gray-500 text-sm mb-4">Управление командами и результатами муниципального этапа</p>
-                <x-button variant="primary" class="w-full justify-center">Открыть</x-button>
-            </x-card>
-
-            <x-card title="👥 Команды">
-                <p class="text-gray-500 text-sm mb-4">Просмотр и управление командами из вашего муниципалитета</p>
-                <x-button variant="outline" class="w-full justify-center">Открыть</x-button>
-            </x-card>
         </div>
-
-        <x-card title="📁 Материалы">
-            <p class="text-gray-500 text-sm">Загрузка и управление учебными материалами</p>
-            <div class="mt-4">
-                <a href="{{ route('materials.create') }}"
-                   class="inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
-                     Загрузить материал
-                </a>
-            </div>
-        </x-card>
-
     </div>
 
-    <!-- ✅ Модальное окно: Пометить на удаление -->
-    <div id="deletionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full">
+    {{-- Модальное окно --}}
+    <div id="deletionModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
             <form method="POST" id="deletionForm">
                 @csrf
-
-                <div class="px-6 py-4 border-b border-gray-200 bg-red-600 rounded-t-xl">
-                    <h3 class="text-lg font-bold text-white">⚠️ Пометить на удаление</h3>
-                </div>
-
-                <div class="px-6 py-4">
-                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
-                        <p class="text-sm text-red-700">
-                            <strong>Внимание!</strong> Вы собираетесь пометить пользователя <strong id="userName"></strong> на удаление.
-                            Это действие потребует подтверждения организатора.
-                        </p>
-                    </div>
-
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Причина удаления *</label>
-                    <textarea
-                        name="deletion_reason"
-                        rows="4"
-                        required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent transition"
-                        placeholder="Укажите причину, почему пользователь не принимает участие..."
-                    ></textarea>
-                    <p class="mt-2 text-xs text-gray-500">Максимум 500 символов</p>
-                </div>
-
-                <div class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end rounded-b-xl">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-base font-semibold text-gray-900">Пометить на удаление</h3>
                     <button type="button" onclick="closeModal()"
-                            class="px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition">
+                            class="p-1 text-gray-400 hover:text-gray-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="p-3 bg-red-50 rounded-xl text-sm text-red-700">
+                        Пользователь <strong id="userName"></strong> будет помечен на удаление и ожидать подтверждения
+                        организатора.
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Причина <span
+                                class="text-red-500">*</span></label>
+                        <textarea name="deletion_reason" rows="3" required maxlength="500"
+                                  class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-red-500 resize-none"
+                                  placeholder="Укажите причину..."></textarea>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()"
+                            class="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">
                         Отмена
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
-                        Пометить на удаление
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition">
+                        Пометить
                     </button>
                 </div>
             </form>
         </div>
     </div>
-
     <script>
         function openModal(userId, userName) {
             document.getElementById('userName').textContent = userName;
@@ -226,16 +233,10 @@
 
         function closeModal() {
             document.getElementById('deletionModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
         }
 
-        // Закрытие по клику вне модального окна
-        document.getElementById('deletionModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-
-        // Закрытие по Escape
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', e => {
             if (e.key === 'Escape') closeModal();
         });
     </script>

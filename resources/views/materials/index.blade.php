@@ -21,9 +21,6 @@
         </div>
 
         <x-card>
-            @php
-                $materials = \App\Models\Material::with('uploadedBy')->latest()->paginate(15);
-            @endphp
 
             @forelse($materials as $material)
                 <div class="flex items-center justify-between p-4 border-b border-gray-200 last:border-0 hover:bg-gray-50">
@@ -52,7 +49,7 @@
                                 @endif
                             </p>
                             <p class="text-xs text-gray-400 mt-1">
-                                Загрузил: {{ $material->uploadedBy?->getFullNameAttribute() ?? 'Неизвестно' }}
+                                Загрузил: {{ $material->uploader?->full_name ?? 'Неизвестно' }}
                                 • {{ $material->created_at->format('d.m.Y') }}
                             </p>
                         </div>

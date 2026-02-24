@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
+use App\Models\News;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +22,20 @@ class DashboardController extends Controller
         $user->load('roles');
 
         if ($user->hasRole('organizer')) {
-            return view('dashboard.organizer', compact('user'));
+            $stats = [
+                'users'  => User::active()->count(),
+                'events' => Event::count(),
+                'news'   => News::count(),
+                'teams'  => Team::count(),
+            ];
+
+            $pendingDeletions = User::where('marked_for_deletion', true)
+                ->with('roles', 'municipality', 'organization')
+                ->latest()
+                ->take(5)
+                ->get();
+
+            return view('dashboard.organizer', compact('user', 'stats', 'pendingDeletions'));
         }
 
         if ($user->hasRole('municipal_coordinator')) {
@@ -38,6 +54,46 @@ class DashboardController extends Controller
 
         // Нет роли — базовый дашборд
         return view('dashboard.index', compact('user'));
+    }
+
+    /**
+     * Список всех пользователей (только для организатора)
+     */
+    public function users(): View|RedirectResponse
+    {
+        if (!auth()->user()->hasRole('organizer')) {
+            abort(403);
+        }
+
+        $users = User::with('roles', 'municipality', 'organization')
+            ->orderBy('last_name')
+            ->paginate(20);
+
+        return view('dashboard.users', compact('users'));
+    }
+
+    /**
+     * Включить / выключить пользователя (только для организатора)
+     */
+    public function toggleActive(User $user): RedirectResponse
+    {
+        if (!auth()->user()->hasRole('organizer')) {
+            abort(403);
+        }
+
+        // Нельзя деактивировать последнего организатора
+        if (!$user->is_active === false && $user->hasRole('organizer')) {
+            $count = User::whereHas('roles', fn($q) => $q->where('name', 'organizer'))
+                ->where('is_active', true)->count();
+            if ($count <= 1) {
+                return back()->with('error', '⚠️ Нельзя деактивировать последнего организатора!');
+            }
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        $status = $user->is_active ? 'активирован' : 'деактивирован';
+        return back()->with('success', "✅ Пользователь {$user->full_name} {$status}.");
     }
 
     /**
