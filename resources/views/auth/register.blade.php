@@ -1,245 +1,377 @@
 @extends('layouts.app')
 
 @php
-    $roleLabels = [
-        'participant'           => 'Участник',
-        'mentor'                => 'Наставник',
-        'municipal_coordinator' => 'Координатор',
+    $roleConfig = [
+        'participant' => [
+            'label'    => 'Участник',
+            'emoji'    => '🎒',
+            'color'    => 'yellow',
+            'badge'    => 'bg-yellow-100 text-yellow-700',
+            'accent'   => 'bg-yellow-50 border-yellow-200',
+        ],
+        'mentor' => [
+            'label'    => 'Наставник',
+            'emoji'    => '👨‍🏫',
+            'color'    => 'green',
+            'badge'    => 'bg-green-100 text-green-700',
+            'accent'   => 'bg-green-50 border-green-200',
+        ],
+        'municipal_coordinator' => [
+            'label'    => 'Координатор',
+            'emoji'    => '🏛️',
+            'color'    => 'blue',
+            'badge'    => 'bg-blue-100 text-blue-700',
+            'accent'   => 'bg-blue-50 border-blue-200',
+        ],
     ];
-    $roleLabel = $roleLabels[$role] ?? $role;
+    $cfg = $roleConfig[$role] ?? $roleConfig['participant'];
 @endphp
 
-@section('title', "Регистрация: {$roleLabel} — Турнир юных математиков")
+@section('title', "Регистрация: {$cfg['label']} — Турнир юных математиков")
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-12">
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-12">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div class="text-center mb-8">
-            <span class="text-4xl">🎓</span>
-            <h2 class="mt-4 text-3xl font-bold text-gray-900">Регистрация</h2>
-            <p class="mt-2 text-gray-600">
-                Роль:
-                <span class="font-semibold text-indigo-600">{{ $roleLabel }}</span>
-            </p>
-            <p class="text-sm text-gray-500 mt-1">
-                <a href="{{ route('register') }}" class="text-indigo-600 hover:text-indigo-500">← Выбрать другую роль</a>
-            </p>
-        </div>
+        {{-- Хлебные крошки --}}
+        <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
+            <a href="{{ route('login') }}" class="hover:text-indigo-600 transition">Войти</a>
+            <span>/</span>
+            <a href="{{ route('register') }}" class="hover:text-indigo-600 transition">Регистрация</a>
+            <span>/</span>
+            <span class="text-gray-700 font-medium">{{ $cfg['label'] }}</span>
+        </nav>
 
-        <x-card title="Данные для регистрации">
+        {{-- Заголовок карточки --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-            @if ($errors->any())
-                <x-alert type="danger" class="mb-6">
-                    <ul class="list-disc list-inside space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </x-alert>
-            @endif
+            {{-- Шапка с ролью --}}
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-{{ $cfg['color'] }}-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-xl">{{ $cfg['emoji'] }}</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Регистрация</h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="px-2 py-0.5 text-xs rounded-full font-medium {{ $cfg['badge'] }}">
+                            {{ $cfg['label'] }}
+                        </span>
+                        <a href="{{ route('register') }}" class="text-xs text-gray-400 hover:text-indigo-600 transition">
+                            Изменить роль →
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-            <form method="POST" action="{{ route('register.submit', $role) }}" class="space-y-5">
+            <form method="POST" action="{{ route('register.submit', $role) }}" class="p-6 space-y-5">
                 @csrf
 
-                {{-- ФИО --}}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="last_name" class="block text-sm font-medium text-gray-700">Фамилия <span class="text-red-500">*</span></label>
-                        <input id="last_name" name="last_name" type="text" value="{{ old('last_name') }}" required
-                            class="mt-1 block w-full input-field @error('last_name') border-red-300 @enderror"
-                            placeholder="Иванов">
-                        @error('last_name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                {{-- Ошибки --}}
+                @if ($errors->any())
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                        <p class="font-semibold mb-1">Пожалуйста, исправьте ошибки:</p>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
-                    <div>
-                        <label for="first_name" class="block text-sm font-medium text-gray-700">Имя <span class="text-red-500">*</span></label>
-                        <input id="first_name" name="first_name" type="text" value="{{ old('first_name') }}" required
-                            class="mt-1 block w-full input-field @error('first_name') border-red-300 @enderror"
-                            placeholder="Иван">
-                        @error('first_name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="middle_name" class="block text-sm font-medium text-gray-700">Отчество</label>
-                        <input id="middle_name" name="middle_name" type="text" value="{{ old('middle_name') }}"
-                            class="mt-1 block w-full input-field"
-                            placeholder="Иванович">
-                    </div>
-                </div>
-
-                {{-- Email и телефон --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
-                        <input id="email" name="email" type="email" value="{{ old('email') }}" required
-                            class="mt-1 block w-full input-field @error('email') border-red-300 @enderror"
-                            placeholder="you@example.com">
-                        @error('email')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">Телефон <span class="text-red-500">*</span></label>
-                        <input id="phone" name="phone" type="tel" value="{{ old('phone') }}" required
-                            class="mt-1 block w-full input-field @error('phone') border-red-300 @enderror"
-                            placeholder="+7 (999) 000-00-00">
-                        @error('phone')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-                </div>
-
-                {{-- Пароль --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Пароль <span class="text-red-500">*</span></label>
-                        <input id="password" name="password" type="password" required
-                            class="mt-1 block w-full input-field @error('password') border-red-300 @enderror"
-                            placeholder="Минимум 8 символов">
-                        @error('password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Подтверждение пароля <span class="text-red-500">*</span></label>
-                        <input id="password_confirmation" name="password_confirmation" type="password" required
-                            class="mt-1 block w-full input-field"
-                            placeholder="Повторите пароль">
-                    </div>
-                </div>
-
-                {{-- Муниципалитет --}}
-                <div>
-                    <label for="municipality_id" class="block text-sm font-medium text-gray-700">Муниципалитет <span class="text-red-500">*</span></label>
-                    <select id="municipality_id" name="municipality_id" required
-                        class="mt-1 block w-full input-field @error('municipality_id') border-red-300 @enderror">
-                        <option value="">— Выберите муниципалитет —</option>
-                        @foreach ($municipalities as $municipality)
-                            <option value="{{ $municipality->id }}" {{ old('municipality_id') == $municipality->id ? 'selected' : '' }}>
-                                {{ $municipality->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('municipality_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-
-                {{-- Поля только для участника --}}
-                @if ($role === 'participant')
-                    <div>
-                        <label for="locality" class="block text-sm font-medium text-gray-700">Населённый пункт <span class="text-red-500">*</span></label>
-                        <input id="locality" name="locality" type="text" value="{{ old('locality') }}" required
-                            class="mt-1 block w-full input-field @error('locality') border-red-300 @enderror"
-                            placeholder="Город / посёлок / деревня">
-                        @error('locality')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="organization_id" class="block text-sm font-medium text-gray-700">Учебное заведение <span class="text-red-500">*</span></label>
-                            <select id="organization_id" name="organization_id" required
-                                class="mt-1 block w-full input-field @error('organization_id') border-red-300 @enderror">
-                                <option value="">— Выберите организацию —</option>
-                                @foreach ($organizations as $org)
-                                    <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected' : '' }}>
-                                        {{ $org->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('organization_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                        </div>
-                        <div>
-                            <label for="grade" class="block text-sm font-medium text-gray-700">Класс <span class="text-red-500">*</span></label>
-                            <select id="grade" name="grade" required
-                                class="mt-1 block w-full input-field @error('grade') border-red-300 @enderror">
-                                <option value="">— Класс —</option>
-                                @for ($i = 1; $i <= 11; $i++)
-                                    <option value="{{ $i }}" {{ old('grade') == $i ? 'selected' : '' }}>{{ $i }} класс</option>
-                                @endfor
-                            </select>
-                            @error('grade')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
-                        </div>
-                    </div>
-
-                    @if ($teams->isNotEmpty())
-                        <div>
-                            <label for="team_id" class="block text-sm font-medium text-gray-700">Команда (если уже есть)</label>
-                            <select id="team_id" name="team_id"
-                                class="mt-1 block w-full input-field">
-                                <option value="">— Без команды —</option>
-                                @foreach ($teams as $team)
-                                    <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
-                                        {{ $team->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @endif
                 @endif
 
-                {{-- Поля для наставника --}}
-                @if ($role === 'mentor')
+                {{-- Секция: ФИО --}}
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Личные данные</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Фамилия <span class="text-red-500">*</span>
+                            </label>
+                            <input name="last_name" type="text" value="{{ old('last_name') }}" required
+                                   placeholder="Иванов"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('last_name') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('last_name')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Имя <span class="text-red-500">*</span>
+                            </label>
+                            <input name="first_name" type="text" value="{{ old('first_name') }}" required
+                                   placeholder="Иван"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('first_name') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('first_name')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Отчество</label>
+                            <input name="middle_name" type="text" value="{{ old('middle_name') }}"
+                                   placeholder="Иванович"
+                                   class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Секция: Контакты --}}
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Контакты</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Email <span class="text-red-500">*</span>
+                            </label>
+                            <input name="email" type="email" value="{{ old('email') }}" required
+                                   placeholder="you@example.com"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('email') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('email')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Телефон <span class="text-red-500">*</span>
+                            </label>
+                            <input name="phone" type="tel" value="{{ old('phone') }}" required
+                                   placeholder="+7 (999) 000-00-00"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('phone') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('phone')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Секция: Пароль --}}
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Пароль</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Пароль <span class="text-red-500">*</span>
+                            </label>
+                            <input name="password" type="password" required
+                                   placeholder="Минимум 8 символов"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('password') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('password')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Подтверждение <span class="text-red-500">*</span>
+                            </label>
+                            <input name="password_confirmation" type="password" required
+                                   placeholder="Повторите пароль"
+                                   class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Секция: Местоположение --}}
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Место</h3>
                     <div>
-                        <label for="organization_id" class="block text-sm font-medium text-gray-700">Организация <span class="text-red-500">*</span></label>
-                        <select id="organization_id" name="organization_id" required
-                            class="mt-1 block w-full input-field @error('organization_id') border-red-300 @enderror">
-                            <option value="">— Выберите организацию —</option>
-                            @foreach ($organizations as $org)
-                                <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected' : '' }}>
-                                    {{ $org->name }}
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            Муниципалитет <span class="text-red-500">*</span>
+                        </label>
+                        <select name="municipality_id" required
+                                class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                       {{ $errors->has('municipality_id') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            <option value="">— Выберите муниципалитет —</option>
+                            @foreach ($municipalities as $municipality)
+                                <option value="{{ $municipality->id }}" {{ old('municipality_id') == $municipality->id ? 'selected' : '' }}>
+                                    {{ $municipality->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('organization_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        @error('municipality_id')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
+                </div>
+
+                {{-- === УЧАСТНИК: доп. поля === --}}
+                @if ($role === 'participant')
                     <div>
-                        <label for="position" class="block text-sm font-medium text-gray-700">Должность <span class="text-red-500">*</span></label>
-                        <input id="position" name="position" type="text" value="{{ old('position') }}" required
-                            class="mt-1 block w-full input-field @error('position') border-red-300 @enderror"
-                            placeholder="Учитель математики">
-                        @error('position')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Учёба</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Населённый пункт <span class="text-red-500">*</span>
+                                </label>
+                                <input name="locality" type="text" value="{{ old('locality') }}" required
+                                       placeholder="Город / посёлок / деревня"
+                                       class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                              {{ $errors->has('locality') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                                @error('locality')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Учебное заведение <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="organization_id" required
+                                            class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                                   {{ $errors->has('organization_id') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                                        <option value="">— Выберите школу —</option>
+                                        @foreach ($organizations as $org)
+                                            <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected' : '' }}>
+                                                {{ $org->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('organization_id')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Класс <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="grade" required
+                                            class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                                   {{ $errors->has('grade') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                                        <option value="">— Класс —</option>
+                                        @for ($i = 1; $i <= 11; $i++)
+                                            <option value="{{ $i }}" {{ old('grade') == $i ? 'selected' : '' }}>{{ $i }} класс</option>
+                                        @endfor
+                                    </select>
+                                    @error('grade')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                            @if ($teams->isNotEmpty())
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Команда <span class="text-gray-400 font-normal">(необязательно)</span>
+                                    </label>
+                                    <select name="team_id"
+                                            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                        <option value="">— Без команды —</option>
+                                        @foreach ($teams as $team)
+                                            <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
+                                                {{ $team->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 @endif
 
-                {{-- Поля для координатора --}}
+                {{-- === НАСТАВНИК: доп. поля === --}}
+                @if ($role === 'mentor')
+                    <div>
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Место работы</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Организация <span class="text-red-500">*</span>
+                                </label>
+                                <select name="organization_id" required
+                                        class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                               {{ $errors->has('organization_id') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                                    <option value="">— Выберите организацию —</option>
+                                    @foreach ($organizations as $org)
+                                        <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected' : '' }}>
+                                            {{ $org->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('organization_id')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Должность <span class="text-red-500">*</span>
+                                </label>
+                                <input name="position" type="text" value="{{ old('position') }}" required
+                                       placeholder="Учитель математики"
+                                       class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                              {{ $errors->has('position') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                                @error('position')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- === КООРДИНАТОР: доп. поля === --}}
                 @if ($role === 'municipal_coordinator')
                     <div>
-                        <label for="position" class="block text-sm font-medium text-gray-700">Должность <span class="text-red-500">*</span></label>
-                        <input id="position" name="position" type="text" value="{{ old('position') }}" required
-                            class="mt-1 block w-full input-field @error('position') border-red-300 @enderror"
-                            placeholder="Методист управления образования">
-                        @error('position')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Место работы</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Должность <span class="text-red-500">*</span>
+                            </label>
+                            <input name="position" type="text" value="{{ old('position') }}" required
+                                   placeholder="Методист управления образования"
+                                   class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition
+                                          {{ $errors->has('position') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                            @error('position')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 @endif
 
-                {{-- Согласие на обработку ПД --}}
-                <div class="border-t border-gray-200 pt-5">
-                    <label class="flex items-start gap-3 cursor-pointer">
-                        <input type="checkbox" name="consent" value="1"
-                            class="mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 @error('consent') border-red-300 @enderror"
-                            {{ old('consent') ? 'checked' : '' }}>
-                        <span class="text-sm text-gray-600">
-                            Я даю согласие на обработку персональных данных в соответствии с Федеральным законом №152-ФЗ
-                            «О персональных данных». <span class="text-red-500">*</span>
+                {{-- Согласие на ПД --}}
+                <div class="pt-2 border-t border-gray-100">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                        <div class="flex-shrink-0 mt-0.5">
+                            <input type="checkbox" name="consent" value="1"
+                                   {{ old('consent') ? 'checked' : '' }}
+                                   class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        </div>
+                        <span class="text-sm text-gray-600 leading-relaxed">
+                            Я даю согласие на обработку персональных данных в соответствии с ФЗ №152
+                            «О персональных данных» <span class="text-red-500">*</span>
                         </span>
                     </label>
                     @error('consent')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
                 {{-- Кнопки --}}
-                <div class="flex items-center justify-between pt-2">
-                    <a href="{{ route('register') }}" class="text-sm text-gray-500 hover:text-gray-700">
-                        ← Назад
+                <div class="flex items-center justify-between pt-1">
+                    <a href="{{ route('register') }}"
+                       class="text-sm text-gray-400 hover:text-gray-600 transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Назад
                     </a>
-                    <x-button type="submit" variant="primary" class="px-8 py-2.5 text-base">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition shadow-sm">
                         Зарегистрироваться
-                    </x-button>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
                 </div>
 
             </form>
-        </x-card>
+        </div>
+
+        {{-- Уже есть аккаунт --}}
+        <p class="text-center text-sm text-gray-400 mt-6">
+            Уже зарегистрированы?
+            <a href="{{ route('login') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">Войти</a>
+        </p>
+
     </div>
 </div>
-
-@push('styles')
-<style>
-    .input-field {
-        @apply px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm;
-    }
-</style>
-@endpush
 @endsection
