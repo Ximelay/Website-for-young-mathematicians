@@ -23,8 +23,8 @@ class TeamController extends Controller
                 ->latest()
                 ->paginate(15);
         }
-        // Организатор видит все команды
-        elseif ($user->hasRole('organizer')) {
+        // Организатор и координатор видят все команды
+        elseif ($user->hasRole('organizer') || $user->hasRole('municipal_coordinator')) {
             $teams = Team::with('mentor', 'municipality', 'members')
                 ->latest()
                 ->paginate(15);
@@ -93,8 +93,14 @@ class TeamController extends Controller
     {
         $user = auth()->user();
 
-        // Проверка прав: наставник видит только свои, организатор — все
-        if ($user->hasRole('mentor') && $team->mentor_id !== $user->id) {
+        // Проверка прав: наставник видит только свои, организатор/координатор — все
+        if (!$user->hasRole('organizer') && !$user->hasRole('municipal_coordinator')
+            && ($user->hasRole('mentor') && $team->mentor_id !== $user->id)) {
+            abort(403);
+        }
+
+        // Участники и другие роли не имеют доступа к этой странице
+        if (!$user->hasRole('mentor') && !$user->hasRole('organizer') && !$user->hasRole('municipal_coordinator')) {
             abort(403);
         }
 
