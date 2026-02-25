@@ -100,7 +100,14 @@ class TeamController extends Controller
 
         $team->load('mentor', 'municipality', 'members.roles');
 
-        return view('teams.show', compact('team'));
+        // Участники без команды (для формы добавления)
+        $freeParticipants = User::whereHas('roles', fn($q) => $q->where('name', 'participant'))
+            ->whereNull('team_id')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('teams.show', compact('team', 'freeParticipants'));
     }
 
     /**
@@ -133,9 +140,13 @@ class TeamController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:teams,name,' . $team->id,
             'municipality_id' => 'required|exists:municipalities,id',
+            'organization_id' => 'required|exists:organizations,id',
             'grade' => 'required|integer|min:1|max:11',
             'description' => 'nullable|string|max:1000',
+            'is_active' => 'boolean',
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
 
         $team->update($validated);
 

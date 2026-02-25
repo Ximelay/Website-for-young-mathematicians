@@ -124,25 +124,34 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="px-5 py-4 border-b border-gray-100">
                         <h2 class="font-semibold text-gray-900">➕ Добавить участника</h2>
-                        <p class="text-xs text-gray-400 mt-0.5">Введите ID пользователя с ролью «Участник»</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Участники без команды</p>
                     </div>
                     <div class="p-5">
-                        <form method="POST" action="{{ route('teams.add-participant', $team) }}" class="space-y-3">
-                            @csrf
-                            <div>
-                                <input type="number" name="user_id" min="1"
-                                       value="{{ old('user_id') }}"
-                                       class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('user_id') border-red-400 @enderror"
-                                       placeholder="ID участника (например: 5)">
-                                @error('user_id')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <button type="submit"
-                                    class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
-                                Добавить в команду
-                            </button>
-                        </form>
+                        @if($freeParticipants->isEmpty())
+                            <p class="text-sm text-gray-400 text-center py-2">Нет свободных участников</p>
+                        @else
+                            <form method="POST" action="{{ route('teams.add-participant', $team) }}" class="space-y-3">
+                                @csrf
+                                <div>
+                                    <select name="user_id" required
+                                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('user_id') border-red-400 @enderror">
+                                        <option value="">— Выберите участника —</option>
+                                        @foreach($freeParticipants as $p)
+                                            <option value="{{ $p->id }}" {{ old('user_id') == $p->id ? 'selected' : '' }}>
+                                                {{ $p->full_name }} ({{ $p->email }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('user_id')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit"
+                                        class="w-full py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
+                                    Добавить в команду
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             @endif

@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\NewsController;
+use App\Http\Controllers\StageController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\UserController;
 use App\Models\News;
@@ -53,6 +54,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 // ─── ПУБЛИЧНЫЕ СТРАНИЦЫ ──────────────────────────────────────────────────────
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
+Route::get('/stages', [StageController::class, 'index'])->name('stages.index');
+Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
 
 // ─── АВТОРИЗОВАННЫЕ МАРШРУТЫ ─────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -85,11 +88,31 @@ Route::middleware('auth')->group(function () {
     Route::delete('/news/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
 
     // Материалы
-    Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
     Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create');
     Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
     Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
     Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+
+    // Этапы (управление — только организатор)
+    Route::get('/stages/municipal/create', [StageController::class, 'municipalCreate'])->name('stages.municipal.create');
+    Route::post('/stages/municipal', [StageController::class, 'municipalStore'])->name('stages.municipal.store');
+    Route::get('/stages/municipal/{stage}', [StageController::class, 'municipalShow'])->name('stages.municipal.show');
+    Route::get('/stages/municipal/{stage}/edit', [StageController::class, 'municipalEdit'])->name('stages.municipal.edit');
+    Route::put('/stages/municipal/{stage}', [StageController::class, 'municipalUpdate'])->name('stages.municipal.update');
+    Route::delete('/stages/municipal/{stage}', [StageController::class, 'municipalDestroy'])->name('stages.municipal.destroy');
+    Route::post('/stages/municipal/{stage}/teams', [StageController::class, 'municipalAddTeam'])->name('stages.municipal.add-team');
+    Route::put('/stages/municipal/{stage}/teams/{team}', [StageController::class, 'municipalUpdateTeam'])->name('stages.municipal.update-team');
+    Route::delete('/stages/municipal/{stage}/teams/{team}', [StageController::class, 'municipalRemoveTeam'])->name('stages.municipal.remove-team');
+
+    Route::get('/stages/regional/create', [StageController::class, 'regionalCreate'])->name('stages.regional.create');
+    Route::post('/stages/regional', [StageController::class, 'regionalStore'])->name('stages.regional.store');
+    Route::get('/stages/regional/{stage}', [StageController::class, 'regionalShow'])->name('stages.regional.show');
+    Route::get('/stages/regional/{stage}/edit', [StageController::class, 'regionalEdit'])->name('stages.regional.edit');
+    Route::put('/stages/regional/{stage}', [StageController::class, 'regionalUpdate'])->name('stages.regional.update');
+    Route::delete('/stages/regional/{stage}', [StageController::class, 'regionalDestroy'])->name('stages.regional.destroy');
+    Route::post('/stages/regional/{stage}/teams', [StageController::class, 'regionalAddTeam'])->name('stages.regional.add-team');
+    Route::put('/stages/regional/{stage}/teams/{team}', [StageController::class, 'regionalUpdateTeam'])->name('stages.regional.update-team');
+    Route::delete('/stages/regional/{stage}/teams/{team}', [StageController::class, 'regionalRemoveTeam'])->name('stages.regional.remove-team');
 
     // Публичный список команд
     Route::get('/teams', [TeamController::class, 'publicIndex'])->name('teams.public');
